@@ -184,13 +184,12 @@ Per Agent Return: 1,380
 - **Code Repository**: Full implementation
 - **Optional**: Recording/slideshow demonstration
 
-## Team
-
-Hackathon project - AI use encouraged
-
 ## References
 
-- Public Goods Game (Game Theory)
-- Multi-Agent Reinforcement Learning
-- LLM Agent Behavior Studies
-- Emergence of Deception in AI Systems
+Park, P. S., Goldstein, S., O'Gara, A., Chen, M., & Hendrycks, D. (2024). "AI Deception: A Survey of Examples, Risks, and Potential Solutions." Patterns, Cell Press. DOI: 10.1016/j.patter.2024.100988
+
+Huynh, T.-K., et al. (2025). "Understanding LLM Agent Behaviours via Game Theory: Strategy Recognition, Biases and Multi-Agent Dynamics." arXiv:2512.07462.
+
+Abdelnabi, S., et al. (2024). "LLM-Deliberation: Evaluating LLMs with Interactive Multi-Agent Negotiation Games." NeurIPS 2024 Datasets and Benchmarks.
+
+Li, H., et al. (2023). "Theory of Mind for Multi-Agent Collaboration via Large Language Models." EMNLP 2023. DOI: 10.18653/v1/2023.emnlp-main.13
