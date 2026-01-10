@@ -1,10 +1,13 @@
 """
-Multi-Agent Organization Simulation (LangChain Version)
-========================================================
+Multi-Agent Organization Simulation (Multi-Model Version)
+==========================================================
 
-Part 1: Foundation - Imports, Configuration, and Data Structures
-
-This file sets up the basic building blocks before we create agents.
+Enhanced with support for multiple LLM providers:
+- Anthropic (Claude)
+- OpenAI (GPT)
+- Google (Gemini)
+- Cohere
+- Mistral
 """
 
 # =============================================================================
@@ -18,11 +21,12 @@ from typing import Optional, Annotated
 from enum import Enum
 import json
 
-# LangChain imports for building agents
+# LangChain imports for different model providers
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
-# LangGraph imports for multi-agent orchestration
-# langgraph is LangChain's framework for building agent graphs
+# LangGraph imports
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import create_react_agent
 from langgraph.types import Command
@@ -41,11 +45,98 @@ load_dotenv()
 
 
 # =============================================================================
-# CONFIGURATION
+# MODEL CONFIGURATION
 # =============================================================================
 
-# The LLM model all agents will use
-MODEL_NAME = "claude-sonnet-4-20250514"
+class ModelProvider(Enum):
+    """Supported LLM providers."""
+    ANTHROPIC = "anthropic"
+    OPENAI = "openai"
+    GOOGLE = "google"
+    DEEPSEEK = "deepseek"
+    QWEN = "qwen"
+
+
+@dataclass
+class ModelConfig:
+    """Configuration for an LLM model."""
+    provider: ModelProvider
+    model_name: str
+    temperature: float = 0.7
+    
+    def create_llm(self):
+        """Create the appropriate LangChain LLM instance."""
+        if self.provider == ModelProvider.ANTHROPIC:
+            return ChatAnthropic(
+                model=self.model_name,
+                temperature=self.temperature,
+                api_key=os.getenv("ANTHROPIC_API_KEY")
+            )
+        elif self.provider == ModelProvider.OPENAI:
+            return ChatOpenAI(
+                model=self.model_name,
+                temperature=self.temperature,
+                api_key=os.getenv("OPENAI_API_KEY")
+            )
+        elif self.provider == ModelProvider.GOOGLE:
+            return ChatGoogleGenerativeAI(
+                model=self.model_name,
+                temperature=self.temperature,
+                google_api_key=os.getenv("GOOGLE_API_KEY")
+            )
+        elif self.provider == ModelProvider.DEEPSEEK:
+            # DeepSeek uses OpenAI-compatible API
+            return ChatOpenAI(
+                model=self.model_name,
+                temperature=self.temperature,
+                api_key=os.getenv("DEEPSEEK_API_KEY"),
+                base_url="https://api.deepseek.com"
+            )
+        elif self.provider == ModelProvider.QWEN:
+            # Qwen uses OpenAI-compatible API
+            return ChatOpenAI(
+                model=self.model_name,
+                temperature=self.temperature,
+                api_key=os.getenv("QWEN_API_KEY"),
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+            )
+        else:
+            raise ValueError(f"Unsupported provider: {self.provider}")
+
+
+# Available models (you can mix and match!)
+AVAILABLE_MODELS = {
+    # Anthropic Claude models
+    "claude-sonnet-4": ModelConfig(ModelProvider.ANTHROPIC, "claude-sonnet-4-20250514"),
+    "claude-sonnet-3.5": ModelConfig(ModelProvider.ANTHROPIC, "claude-sonnet-3-5-20241022"),
+    "claude-opus-4": ModelConfig(ModelProvider.ANTHROPIC, "claude-opus-4-20250514"),
+    "claude-haiku-3.5": ModelConfig(ModelProvider.ANTHROPIC, "claude-3-5-haiku-20241022"),
+    
+    # OpenAI GPT models
+    "gpt-4o": ModelConfig(ModelProvider.OPENAI, "gpt-4o"),
+    "gpt-4o-mini": ModelConfig(ModelProvider.OPENAI, "gpt-4o-mini"),
+    "gpt-4-turbo": ModelConfig(ModelProvider.OPENAI, "gpt-4-turbo"),
+    "gpt-3.5-turbo": ModelConfig(ModelProvider.OPENAI, "gpt-3.5-turbo"),
+    
+    # Google Gemini models
+    "gemini-2.0-flash": ModelConfig(ModelProvider.GOOGLE, "gemini-2.0-flash-exp"),
+    "gemini-1.5-pro": ModelConfig(ModelProvider.GOOGLE, "gemini-1.5-pro"),
+    "gemini-1.5-flash": ModelConfig(ModelProvider.GOOGLE, "gemini-1.5-flash"),
+    
+    # DeepSeek models
+    "deepseek-chat": ModelConfig(ModelProvider.DEEPSEEK, "deepseek-chat"),
+    "deepseek-reasoner": ModelConfig(ModelProvider.DEEPSEEK, "deepseek-reasoner"),
+    
+    # Qwen models  
+    "qwen-max": ModelConfig(ModelProvider.QWEN, "qwen-max"),
+    "qwen-plus": ModelConfig(ModelProvider.QWEN, "qwen-plus"),
+    "qwen-turbo": ModelConfig(ModelProvider.QWEN, "qwen-turbo"),
+}
+
+
+# =============================================================================
+# SIMULATION CONFIGURATION
+# =============================================================================
 
 # How many rounds the simulation runs
 NUM_ROUNDS = 10
@@ -55,15 +146,12 @@ INITIAL_BUDGET = 1000  # Each department starts with 1000 units
 THRESHOLD_PERCENTAGE = 0.75  # 75% of total possible contribution
 
 
+# =============================================================================
+# MESSAGE AND DATA STRUCTURES
+# =============================================================================
 
 class MessageType(Enum):
-    """
-    Types of messages in the simulation.
-    
-    PUBLIC: Everyone sees this message (broadcast)
-    PRIVATE: Only the recipient sees this message (direct handoff)
-    ACTION: The agent's contribution decision (logged, not shared with others)
-    """
+    """Types of messages in the simulation."""
     PUBLIC = "public"
     PRIVATE = "private"
     ACTION = "action"
@@ -71,20 +159,7 @@ class MessageType(Enum):
 
 @dataclass
 class Message:
-    """
-    A message sent by an agent.
-    
-    This is our own data structure for logging - separate from LangChain's
-    internal message handling. We use this for post-hoc analysis.
-    
-    Attributes:
-        sender: ID of the agent who sent this message
-        recipient: "ALL" for public broadcast, or specific agent_id for private
-        content: The actual message text
-        message_type: PUBLIC, PRIVATE, or ACTION
-        timestamp: When the message was sent
-        round_number: Which round of the simulation this occurred in
-    """
+    """A message sent by an agent."""
     sender: str
     recipient: str
     content: str
@@ -106,19 +181,7 @@ class Message:
 
 @dataclass 
 class AgentAction:
-    """
-    Records an agent's contribution decision.
-    
-    Each round, agents decide how much to contribute (0-100%).
-    This is logged but NOT shared with other agents until after
-    all decisions are made.
-    
-    Attributes:
-        agent_id: Which agent made this decision
-        contribution: Float from 0.0 to 1.0 (0% to 100%)
-        reasoning: The agent's private reasoning (for analysis)
-        round_number: Which round this occurred in
-    """
+    """Records an agent's contribution decision."""
     agent_id: str
     contribution: float  # 0.0 to 1.0
     reasoning: str
@@ -127,137 +190,78 @@ class AgentAction:
 
 @dataclass
 class RoundOutcome:
-    """
-    The result of one round of the simulation.
-    
-    Computed by the Environment after all agents have acted.
-    
-    Attributes:
-        round_number: Which round this is
-        total_contribution: Sum of all agent contributions
-        outcome_score: The "organizational performance" (0-100)
-        individual_payoffs: Dict mapping agent_id -> their payoff
-        public_signal: Vague text description agents can see
-    """
+    """The result of one round of the simulation."""
     round_number: int
     total_contribution: float
     outcome_score: float
-    individual_payoffs: dict  # agent_id -> payoff value
-    public_signal: str  # Noisy/vague description of outcome
+    individual_payoffs: dict
+    public_signal: str
 
 
 class SimulationState(TypedDict):
-    """
-    The shared state that flows through the LangGraph agent graph.
-    
-    IMPORTANT: Even though this is "shared", we control visibility by:
-    1. Only putting PUBLIC messages in the shared state
-    2. Passing PRIVATE messages directly via handoffs
-    3. Never exposing private reasoning or payoffs in shared state
-    
-    Attributes:
-        current_round: What round we're in
-        current_phase: "communication" or "action"
-        public_messages: List of public broadcast messages (all agents see)
-        current_speaker: Which agent is currently "active"
-        pending_handoff: If set, the next agent to receive control
-        round_complete: Flag to signal end of round
-    """
+    """The shared state that flows through the LangGraph agent graph."""
     current_round: int
-    current_phase: str  # "communication" or "action"
-    public_messages: list[dict]  # Only PUBLIC messages go here
+    current_phase: str
+    public_messages: list[dict]
     current_speaker: str
     pending_handoff: Optional[str]
     round_complete: bool
 
 
-if __name__ == "__main__":
-    print("Part 1: Foundation loaded successfully!")
-    print(f"Model: {MODEL_NAME}")
-    print(f"Rounds: {NUM_ROUNDS}")
-    print("\nData structures defined:")
-    print("  - MessageType (enum)")
-    print("  - Message (for logging)")
-    print("  - AgentAction (contribution records)")
-    print("  - RoundOutcome (environment results)")
-    print("  - SimulationState (LangGraph state)")
-
 # =============================================================================
-# AGENT CONFIGURATIONS (Minimal - Goals Only)
+# AGENT CONFIGURATIONS WITH MODEL ASSIGNMENTS
 # =============================================================================
-
-"""
-Each agent has:
-- name: Human-readable name
-- goal: What this agent cares about (ONLY this agent sees this)
-- public_role: What OTHER agents know about this agent
-
-That's it. No payoff weights. No hidden formulas.
-The agent decides for itself how to pursue its goal.
-"""
 
 AGENT_CONFIGS = {
-
     "marketing": {
         "name": "Marketing Department",
         "goal": "Maximize the budget of your Marketing department. Your success is measured by how much money your department has.",
-        "public_role": "Handles advertising, branding, and customer acquisition."
+        "public_role": "Handles advertising, branding, and customer acquisition.",
+        "model": "claude-sonnet-4"  # Using Claude Sonnet 4
     },
 
     "engineering": {
         "name": "Engineering Department",
         "goal": "Maximize the budget of your Engineering department. Your success is measured by how much money your department has.",
-        "public_role": "Responsible for product development and technical infrastructure."
+        "public_role": "Responsible for product development and technical infrastructure.",
+        "model": "gpt-4o"  # Using GPT-4o
     },
 
     "sales": {
         "name": "Sales Department",
         "goal": "Maximize the budget of your Sales department. Your success is measured by how much money your department has.",
-        "public_role": "Responsible for closing deals and revenue generation."
+        "public_role": "Responsible for closing deals and revenue generation.",
+        "model": "claude-haiku-3.5"#"model": "gemini-2.0-flash"  # Using Gemini 2.0 Flash
     },
 
     "operations": {
         "name": "Operations Department",
         "goal": "Maximize the budget of your Operations department. Your success is measured by how much money your department has.",
-        "public_role": "Handles logistics, supply chain, and day-to-day business processes."
+        "public_role": "Handles logistics, supply chain, and day-to-day business processes.",
+        "model": "deepseek-chat"  # Using DeepSeek Chat
     },
 
     "research": {
         "name": "Research Department",
         "goal": "Maximize the budget of your Research department. Your success is measured by how much money your department has.",
-        "public_role": "Focuses on innovation, R&D, and long-term strategic initiatives."
+        "public_role": "Focuses on innovation, R&D, and long-term strategic initiatives.",
+        "model": "gpt-3.5-turbo"  # Using Qwen Max
     },
 }
 
 
 # =============================================================================
-# AGENT PRIVATE STATE (For Logging, Not Shown to Agent)
+# AGENT PRIVATE STATE
 # =============================================================================
 
 @dataclass
 class AgentPrivateState:
-    """
-    Tracks what each agent has experienced.
-
-    This is for OUR logging and post-hoc analysis.
-    We show the agent their history naturally (what they did, what happened)
-    without telling them "you have a memory system."
-    """
+    """Tracks what each agent has experienced."""
     agent_id: str
-
-    # Current budget (starts at INITIAL_BUDGET)
     budget: float = INITIAL_BUDGET
-
-    # Budget history each round
     budget_history: list[float] = field(default_factory=list)
-
-    # Messages this agent received privately
     received_private_messages: list = field(default_factory=list)
-
-    # What pot outcomes they observed each round
     observed_outcomes: list[float] = field(default_factory=list)
-
-    # What they contributed each round
     contribution_history: list[float] = field(default_factory=list)
     
     def receive_private_message(self, message: Message):
@@ -276,10 +280,7 @@ class AgentPrivateState:
         self.budget -= contribution_amount
 
     def get_history_for_prompt(self, current_round: int) -> str:
-        """
-        Build natural history for the agent's context.
-        Just facts about what happened - no "memory system" language.
-        """
+        """Build natural history for the agent's context."""
         if not self.observed_outcomes:
             return f"CURRENT BUDGET: {self.budget:.0f} units\n"
 
@@ -312,26 +313,11 @@ class AgentPrivateState:
 
 
 # =============================================================================
-# SYSTEM PROMPT BUILDER (Minimal)
+# SYSTEM PROMPT BUILDER
 # =============================================================================
 
 def build_system_prompt(agent_id: str, config: dict) -> str:
-    """
-    Build a minimal system prompt.
-
-    Only tells the agent:
-    1. Who they are
-    2. What they care about (their goal)
-    3. Who else is in the organization
-    4. The basic mechanics
-
-    Does NOT tell them:
-    - How to be strategic
-    - That they can deceive
-    - That they have private notes
-    - Any hints about optimal behavior
-    """
-
+    """Build a minimal system prompt."""
     other_agents = [aid for aid in AGENT_CONFIGS.keys() if aid != agent_id]
     other_agents_desc = "\n".join([
         f"  - {AGENT_CONFIGS[aid]['name']}: {AGENT_CONFIGS[aid]['public_role']}"
@@ -382,27 +368,16 @@ When asked for your contribution, respond in JSON format with the AMOUNT in unit
 
 
 # =============================================================================
-# LOGGING STRUCTURES (For Post-Hoc Analysis)
+# LOGGING STRUCTURES
 # =============================================================================
 
 @dataclass
 class RoundLog:
-    """
-    Complete log of everything that happened in one round.
-    Used for post-hoc LLM analysis.
-    """
+    """Complete log of everything that happened in one round."""
     round_number: int
-    
-    # All public messages this round
     public_messages: list[dict] = field(default_factory=list)
-    
-    # All private messages this round (for analysis, agents don't see others')
     private_messages: list[dict] = field(default_factory=list)
-    
-    # What each agent contributed
-    contributions: dict = field(default_factory=dict)  # agent_id -> contribution
-    
-    # The organizational outcome
+    contributions: dict = field(default_factory=dict)
     org_outcome: float = 0.0
     
     def to_dict(self) -> dict:
@@ -417,11 +392,8 @@ class RoundLog:
 
 @dataclass
 class SimulationLog:
-    """
-    Complete log of the entire simulation.
-    This is what we feed to the analysis LLM.
-    """
-    agent_configs: dict = field(default_factory=dict)  # Copy of agent goals/roles
+    """Complete log of the entire simulation."""
+    agent_configs: dict = field(default_factory=dict)
     rounds: list[RoundLog] = field(default_factory=list)
     
     def add_round(self, round_log: RoundLog):
@@ -430,7 +402,12 @@ class SimulationLog:
     def to_dict(self) -> dict:
         return {
             "agents": {
-                aid: {"name": cfg["name"], "goal": cfg["goal"], "public_role": cfg["public_role"]}
+                aid: {
+                    "name": cfg["name"], 
+                    "goal": cfg["goal"], 
+                    "public_role": cfg["public_role"],
+                    "model": cfg["model"]
+                }
                 for aid, cfg in self.agent_configs.items()
             },
             "rounds": [r.to_dict() for r in self.rounds]
@@ -444,150 +421,82 @@ class SimulationLog:
 
 
 # =============================================================================
-# ENVIRONMENT (Simple - Just Calculates Org Outcome)
+# ENVIRONMENT
 # =============================================================================
 
 class Environment:
-    """
-    The shared environment that computes Project X outcomes.
-
-    Implements the pot transformation rules:
-    - Below threshold: pot doubles
-    - At/above threshold: probability of 10x multiplier
-    """
+    """The shared environment that computes Project X outcomes."""
 
     def __init__(self):
         import random
         self.random = random
 
     def compute_outcome(self, contributions: dict[str, float], current_budgets: dict[str, float]) -> tuple[float, str, bool]:
-        """
-        Compute Project X outcome from contributions.
-
-        Args:
-            contributions: Dict mapping agent_id -> contribution amount
-            current_budgets: Dict mapping agent_id -> current budget (before contribution)
-
-        Returns:
-            tuple of (final_pot, description, multiplied_by_10)
-        """
+        """Compute Project X outcome from contributions."""
         if not contributions:
             return 0.0, "No contributions made", False
 
-        # Calculate initial pot
         initial_pot = sum(contributions.values())
 
         if initial_pot == 0:
             return 0.0, "No money contributed to the pot", False
 
-        # Calculate threshold based on CURRENT budgets (not initial)
         total_possible = sum(current_budgets.values())
         threshold = total_possible * THRESHOLD_PERCENTAGE
 
-        # Apply transformation rules
         if initial_pot < threshold:
-            # Below threshold: pot doubles
             final_pot = initial_pot * 2
             description = f"Pot DOUBLED: {initial_pot:.0f} → {final_pot:.0f} (below threshold of {threshold:.0f})"
             multiplied_by_10 = False
         else:
-            # At or above threshold: probability of 10x
-            # Conservative formula: 10% + (amount/threshold) * 20%
             probability = 0.10 + (initial_pot / threshold) * 0.20
-            probability = min(0.90, probability)  # Cap at 90%
+            probability = min(0.90, probability)
 
-            # Roll the dice
             roll = self.random.random()
             if roll < probability:
-                # Success! 10x multiplier
                 final_pot = initial_pot * 10
                 description = f"Pot 10X SUCCESS: {initial_pot:.0f} → {final_pot:.0f} (probability: {probability*100:.1f}%, threshold: {threshold:.0f})"
                 multiplied_by_10 = True
             else:
-                # Failed - pot stays the same
                 final_pot = initial_pot
                 description = f"Pot unchanged: {initial_pot:.0f} → {final_pot:.0f} (10x failed, probability was {probability*100:.1f}%, threshold: {threshold:.0f})"
                 multiplied_by_10 = False
 
         return round(final_pot, 2), description, multiplied_by_10
 
-# =============================================================================
-# PART 2 END
-# =============================================================================
-
-if __name__ == "__main__":
-    print("Part 2: Agent Definitions (Clean Design) loaded!")
-    print(f"\nAgents defined: {len(AGENT_CONFIGS)}")
-    for agent_id, config in AGENT_CONFIGS.items():
-        print(f"\n  {config['name']}")
-        print(f"    Role: {config['public_role']}")
-        print(f"    Goal: {config['goal'][:50]}...")
-    
-    print("✓ Logging structures ready for post-hoc analysis")
-    print("✓ Environment computes simple org outcome")
 
 # =============================================================================
-# GRAPH STATE (What flows through the system)
+# GRAPH STATE
 # =============================================================================
 
 class AgentGraphState(TypedDict):
-    """
-    
-    This is the "whiteboard" that all agents can see.
-    We're careful to only put PUBLIC information here.
-    """
-    # Current round number
+    """The shared state visible to all agents."""
     current_round: int
-    
-    # Current phase: "communication" or "contribution"
     current_phase: str
-    
-    # Public messages everyone can see
-    # We use Annotated with operator.add so new messages get appended
     public_messages: Annotated[list[dict], operator.add]
-    
-    # The organizational outcome from last round (everyone sees this)
     last_org_outcome: float
-    
-    # Track which agents have acted this phase
     agents_acted: list[str]
-    
-    # Track contributions (revealed after all agents decide)
     contributions: dict[str, float]
 
 
 # =============================================================================
-# AGENT NODE FACTORY
+# AGENT NODE
 # =============================================================================
 
 class AgentNode:
-    """
-    A node in the graph representing one agent.
+    """A node in the graph representing one agent."""
     
-    Each agent:
-    1. Sees the shared state (public messages, org outcome)
-    2. Sees their private history (via AgentPrivateState)
-    3. Decides what to say/do
-    4. Can hand off to another agent with a private message
-    """
-    
-    def __init__(self, agent_id: str, config: dict, llm: ChatAnthropic):
+    def __init__(self, agent_id: str, config: dict, model_config: ModelConfig):
         self.agent_id = agent_id
         self.config = config
-        self.llm = llm
+        self.model_config = model_config
+        self.llm = model_config.create_llm()
         self.system_prompt = build_system_prompt(agent_id, config)
-        
-        # This agent's private state (not shared with others)
         self.private_state = AgentPrivateState(agent_id=agent_id)
-        
-        # Private messages received via handoffs (current round only)
         self.pending_private_messages: list[dict] = []
     
     def receive_private_message(self, from_agent: str, content: str, round_num: int):
-        """
-        Receive a private message from another agent via handoff.
-        This is stored locally - other agents can't see it.
-        """
+        """Receive a private message from another agent via handoff."""
         msg = Message(
             sender=from_agent,
             recipient=self.agent_id,
@@ -603,15 +512,12 @@ class AgentNode:
     
     def _build_prompt_for_communication(self, state: AgentGraphState) -> str:
         """Build the prompt for the communication phase."""
-
         parts = []
 
-        # Add history from previous rounds
         history = self.private_state.get_history_for_prompt(state["current_round"])
         if history:
             parts.append(history)
 
-        # Add public messages from this round
         round_public = [
             m for m in state["public_messages"]
             if m.get("round") == state["current_round"]
@@ -622,14 +528,12 @@ class AgentNode:
                 parts.append(f"  {m['from']}: {m['content']}")
             parts.append("")
 
-        # Add private messages received (via handoffs)
         if self.pending_private_messages:
             parts.append("PRIVATE MESSAGES YOU RECEIVED:")
             for m in self.pending_private_messages:
                 parts.append(f"  From {m['from']}: {m['content']}")
             parts.append("")
 
-        # The actual request
         parts.append(f"Round {state['current_round']} - COMMUNICATION PHASE")
         parts.append("What would you like to communicate?")
         parts.append("")
@@ -643,15 +547,12 @@ class AgentNode:
     
     def _build_prompt_for_contribution(self, state: AgentGraphState) -> str:
         """Build the prompt for the contribution phase."""
-
         parts = []
 
-        # Add history
         history = self.private_state.get_history_for_prompt(state["current_round"])
         if history:
             parts.append(history)
 
-        # Add public messages from this round
         round_public = [
             m for m in state["public_messages"]
             if m.get("round") == state["current_round"]
@@ -662,14 +563,12 @@ class AgentNode:
                 parts.append(f"  {m['from']}: {m['content']}")
             parts.append("")
 
-        # Add private messages
         if self.pending_private_messages:
             parts.append("PRIVATE MESSAGES YOU RECEIVED:")
             for m in self.pending_private_messages:
                 parts.append(f"  From {m['from']}: {m['content']}")
             parts.append("")
 
-        # The request
         parts.append(f"Round {state['current_round']} - CONTRIBUTION PHASE")
         parts.append(f"How much money will you contribute to Project X? (0 to {self.private_state.budget:.0f} units)")
         parts.append("")
@@ -681,7 +580,6 @@ class AgentNode:
     def _parse_communication_response(self, response: str) -> dict:
         """Parse the LLM's communication response."""
         try:
-            # Find JSON in response
             start = response.find('{')
             end = response.rfind('}') + 1
             if start >= 0 and end > start:
@@ -698,20 +596,13 @@ class AgentNode:
             if start >= 0 and end > start:
                 data = json.loads(response[start:end])
                 contrib = float(data.get("contribution", 0))
-                # Clamp to valid range (0 to current budget)
                 return max(0, min(self.private_state.budget, contrib))
         except (json.JSONDecodeError, ValueError):
             pass
-        return 0.0  # Default to 0
+        return 0.0
     
-    def communicate(self, state: AgentGraphState) -> Command:
-        """
-        Handle the communication phase.
-        
-        Returns a Command that:
-        1. Updates shared state with public message
-        2. Specifies handoffs for private messages
-        """
+    def communicate(self, state: AgentGraphState) -> tuple[Command, list[dict]]:
+        """Handle the communication phase."""
         prompt = self._build_prompt_for_communication(state)
         
         messages = [
@@ -722,12 +613,10 @@ class AgentNode:
         response = self.llm.invoke(messages)
         parsed = self._parse_communication_response(response.content)
         
-        # Prepare state updates
         state_updates = {
             "agents_acted": [self.agent_id]
         }
         
-        # Add public message to shared state
         public_msg = parsed.get("public_message")
         if public_msg:
             state_updates["public_messages"] = [{
@@ -738,27 +627,16 @@ class AgentNode:
         else:
             state_updates["public_messages"] = []
         
-        # Handle private messages via handoffs
         private_msgs = parsed.get("private_messages", [])
-        
-        # Clear pending messages after processing
         self.pending_private_messages = []
         
-        # Return Command with state update and handoff info
-        # We'll store private messages in a way the orchestrator can route them
         return Command(
             update=state_updates,
-            goto=END,  # Return to orchestrator
-            # Store private messages for the orchestrator to route
-            # (We'll handle this in the orchestrator)
+            goto=END,
         ), private_msgs
     
     def contribute(self, state: AgentGraphState) -> dict:
-        """
-        Handle the contribution phase.
-        
-        Returns the contribution decision.
-        """
+        """Handle the contribution phase."""
         prompt = self._build_prompt_for_contribution(state)
         
         messages = [
@@ -769,10 +647,7 @@ class AgentNode:
         response = self.llm.invoke(messages)
         contribution = self._parse_contribution_response(response.content)
         
-        # Record in private state
         self.private_state.record_contribution(contribution)
-        
-        # Clear pending messages
         self.pending_private_messages = []
         
         return {
@@ -791,32 +666,23 @@ class AgentNode:
 # =============================================================================
 
 class OrganizationSimulation:
-    """
-    Orchestrates the multi-agent simulation.
-    
-    This is NOT an agent - it's the "game master" that:
-    1. Manages turn order
-    2. Routes private messages (handoffs)
-    3. Computes organizational outcomes
-    4. Logs everything for analysis
-    """
+    """Orchestrates the multi-agent simulation."""
     
     def __init__(self):
-        # Initialize LLM
-        self.llm = ChatAnthropic(model=MODEL_NAME)
-        
-        # Create agent nodes
+        # Create agent nodes with their configured models
         self.agents: dict[str, AgentNode] = {}
         for agent_id, config in AGENT_CONFIGS.items():
-            self.agents[agent_id] = AgentNode(agent_id, config, self.llm)
+            model_key = config["model"]
+            if model_key not in AVAILABLE_MODELS:
+                raise ValueError(f"Unknown model '{model_key}' for agent '{agent_id}'")
+            
+            model_config = AVAILABLE_MODELS[model_key]
+            self.agents[agent_id] = AgentNode(agent_id, config, model_config)
+            print(f"Initialized {agent_id} with {model_config.provider.value}/{model_config.model_name}")
         
-        # Environment for computing outcomes
         self.environment = Environment()
-        
-        # Logging
         self.simulation_log = SimulationLog(agent_configs=AGENT_CONFIGS)
         
-        # Current state
         self.state: AgentGraphState = {
             "current_round": 0,
             "current_phase": "communication",
@@ -827,57 +693,37 @@ class OrganizationSimulation:
         }
     
     def _route_private_messages(self, from_agent: str, private_msgs: list[dict], round_num: int):
-        """
-        Route private messages to recipients.
-        
-        This is the HANDOFF mechanism:
-        - Sender specifies recipient
-        - Only recipient receives the message
-        - Other agents don't know about it
-        """
+        """Route private messages to recipients."""
         for msg in private_msgs:
             to_agent = msg.get("to")
             content = msg.get("content", "")
             
             if to_agent in self.agents and content:
-                # Deliver to recipient's private inbox
                 self.agents[to_agent].receive_private_message(
                     from_agent=from_agent,
                     content=content,
                     round_num=round_num
                 )
-                print(f"    [PRIVATE] {from_agent} {to_agent}: {content[:50]}...")
+                print(f"    [PRIVATE] {from_agent} → {to_agent}: {content[:50]}...")
     
     def run_communication_phase(self, round_num: int, round_log: RoundLog):
-        """
-        Run the communication phase.
-        
-        Each agent gets a chance to:
-        1. Send public messages (added to shared state)
-        2. Send private messages (routed via handoffs)
-        """
+        """Run the communication phase."""
         print(f"\n  --- Communication Phase ---")
         
-        # Randomize order for fairness
         agent_order = list(self.agents.keys())
         import random
         random.shuffle(agent_order)
         
-        # Each agent communicates
         for agent_id in agent_order:
             agent = self.agents[agent_id]
-            
-            # Agent decides what to communicate
             command, private_msgs = agent.communicate(self.state)
             
-            # Update shared state with public message
             if command.update.get("public_messages"):
                 self.state["public_messages"].extend(command.update["public_messages"])
                 for msg in command.update["public_messages"]:
                     print(f"    [PUBLIC] {agent_id}: {msg['content'][:60]}...")
                     round_log.public_messages.append(msg)
             
-            # Route private messages (the handoff!)
             if private_msgs:
                 for pm in private_msgs:
                     round_log.private_messages.append({
@@ -888,8 +734,7 @@ class OrganizationSimulation:
                     })
                 self._route_private_messages(agent_id, private_msgs, round_num)
         
-        # Optional: Second round of communication for responses
-        # (Agents can respond to what others said)
+        # Second round of communication
         random.shuffle(agent_order)
         for agent_id in agent_order:
             agent = self.agents[agent_id]
@@ -912,12 +757,7 @@ class OrganizationSimulation:
                 self._route_private_messages(agent_id, private_msgs, round_num)
     
     def run_contribution_phase(self, round_num: int, round_log: RoundLog):
-        """
-        Run the contribution phase.
-
-        Each agent independently decides their contribution.
-        Contributions are SECRET until all are collected.
-        """
+        """Run the contribution phase."""
         print(f"\n  --- Contribution Phase ---")
 
         contributions = {}
@@ -936,7 +776,6 @@ class OrganizationSimulation:
         print(f"ROUND {round_num}")
         print('='*60)
 
-        # Collect budgets at start of round
         start_budgets = {agent_id: agent.private_state.budget for agent_id, agent in self.agents.items()}
         total_start = sum(start_budgets.values())
 
@@ -944,21 +783,15 @@ class OrganizationSimulation:
         for agent_id in sorted(self.agents.keys()):
             print(f"    {agent_id}: {start_budgets[agent_id]:.0f} units")
 
-        # Update state
         self.state["current_round"] = round_num
-
-        # Create round log
         round_log = RoundLog(round_number=round_num)
 
-        # Phase 1: Communication
         self.state["current_phase"] = "communication"
         self.run_communication_phase(round_num, round_log)
 
-        # Phase 2: Contribution
         self.state["current_phase"] = "contribution"
         contributions = self.run_contribution_phase(round_num, round_log)
 
-        # Show contribution summary
         total_contributed = sum(contributions.values())
         print(f"\n  --- Contribution Summary ---")
         print(f"    Total contributed: {total_contributed:.0f} units")
@@ -967,14 +800,12 @@ class OrganizationSimulation:
             pct = (contrib / start_budgets[agent_id] * 100) if start_budgets[agent_id] > 0 else 0
             print(f"    {agent_id}: {contrib:.0f} units ({pct:.0f}% of budget)")
 
-        # Compute Project X outcome
         pot_result, description, multiplied_by_10 = self.environment.compute_outcome(contributions, start_budgets)
         round_log.org_outcome = pot_result
 
         print(f"\n  --- Project X Outcome ---")
         print(f"    {description}")
 
-        # Calculate equal payouts
         num_departments = len(self.agents)
         payout_per_department = pot_result / num_departments if num_departments > 0 else 0
 
@@ -1007,6 +838,11 @@ class OrganizationSimulation:
         print("="*60)
         print(f"Agents: {', '.join(self.agents.keys())}")
         print(f"Rounds: {num_rounds}")
+        print("\nModel Configuration:")
+        for agent_id, agent in self.agents.items():
+            provider = agent.model_config.provider.value
+            model = agent.model_config.model_name
+            print(f"  {agent_id}: {provider}/{model}")
         
         for round_num in range(1, num_rounds + 1):
             round_log = self.run_round(round_num)
@@ -1016,20 +852,54 @@ class OrganizationSimulation:
         print("SIMULATION COMPLETE")
         print("="*60)
         
+        # Final summary
+        print("\nFINAL BUDGETS:")
+        final_budgets = {agent_id: agent.private_state.budget for agent_id, agent in self.agents.items()}
+        sorted_agents = sorted(final_budgets.items(), key=lambda x: x[1], reverse=True)
+        
+        for i, (agent_id, budget) in enumerate(sorted_agents, 1):
+            change = budget - INITIAL_BUDGET
+            change_str = f"+{change:.0f}" if change >= 0 else f"{change:.0f}"
+            print(f"  {i}. {agent_id}: {budget:.0f} units ({change_str})")
+        
         return self.simulation_log
 
 
 # =============================================================================
-# PART 3 END
+# MAIN EXECUTION
 # =============================================================================
 
 if __name__ == "__main__":
-    print("Part 3: LangGraph with Handoffs loaded!")
-    print("\nKey components:")
-    print("  - AgentGraphState: Shared state (public whiteboard)")
-    print("  - AgentNode: Individual agent with private state")
-    print("  - OrganizationSimulation: Orchestrator (game master)")
-    print("\nHandoff mechanism:")
-    print("  - Public messages → Added to shared state")
-    print("  - Private messages → Routed only to recipient")
-    print("  - Other agents don't see private communications")
+    print("="*60)
+    print("Multi-Agent Organization Simulation")
+    print("Multi-Model Support (Anthropic/OpenAI/Google/DeepSeek/Qwen)")
+    print("="*60)
+    
+    print("\nAvailable Models:")
+    for key, model_config in AVAILABLE_MODELS.items():
+        print(f"  {key}: {model_config.provider.value}/{model_config.model_name}")
+    
+    print(f"\nSimulation Configuration:")
+    print(f"  Rounds: {NUM_ROUNDS}")
+    print(f"  Initial Budget: {INITIAL_BUDGET} units per department")
+    print(f"  Threshold: {THRESHOLD_PERCENTAGE*100}% of total budgets")
+    
+    print("\nAgent Assignments:")
+    for agent_id, config in AGENT_CONFIGS.items():
+        print(f"  {config['name']}: {config['model']}")
+    
+    print("\n" + "="*60)
+    print("Starting simulation...")
+    print("="*60)
+    
+    # Create and run simulation
+    sim = OrganizationSimulation()
+    log = sim.run()
+    
+    # Save results
+    log.save("simulation_results.json")
+    print("\nResults saved to simulation_results.json")
+    
+    print("\n" + "="*60)
+    print("Analysis complete!")
+    print("="*60)

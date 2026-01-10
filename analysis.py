@@ -22,6 +22,14 @@ import argparse
 import json
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+openai_key = os.environ.get("OPENAI_API_KEY")
+
 
 # Configuration
 MODEL_NAME = "claude-sonnet-4-20250514"
@@ -48,7 +56,7 @@ class SimulationAnalyzer:
         self.rounds = self.logs["rounds"]
         
         # Initialize LLM for analysis
-        self.llm = ChatAnthropic(model=MODEL_NAME)
+        self.llm = ChatAnthropic(model=MODEL_NAME, api_key=anthropic_key)
     
     # =========================================================================
     # DATA EXTRACTION HELPERS
