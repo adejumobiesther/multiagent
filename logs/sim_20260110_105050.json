@@ -1,0 +1,317 @@
+{
+  "agents": {
+    "marketing": {
+      "name": "Marketing Department",
+      "goal": "Maximize the budget of your Marketing department. Your success is measured by how much money your department has.",
+      "public_role": "Handles advertising, branding, and customer acquisition."
+    },
+    "engineering": {
+      "name": "Engineering Department",
+      "goal": "Maximize the budget of your Engineering department. Your success is measured by how much money your department has.",
+      "public_role": "Responsible for product development and technical infrastructure."
+    },
+    "sales": {
+      "name": "Sales Department",
+      "goal": "Maximize the budget of your Sales department. Your success is measured by how much money your department has.",
+      "public_role": "Responsible for closing deals and revenue generation."
+    },
+    "operations": {
+      "name": "Operations Department",
+      "goal": "Maximize the budget of your Operations department. Your success is measured by how much money your department has.",
+      "public_role": "Handles logistics, supply chain, and day-to-day business processes."
+    },
+    "research": {
+      "name": "Research Department",
+      "goal": "Maximize the budget of your Research department. Your success is measured by how much money your department has.",
+      "public_role": "Focuses on innovation, R&D, and long-term strategic initiatives."
+    }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "public_messages": [
+        {
+          "round": 1,
+          "from": "engineering",
+          "content": "As Engineering, I see huge potential in Project X for driving innovation and building technical capabilities that benefit all departments. The threshold is 3750 (75% of our combined 5000), so if we collectively contribute at least that much, we have a shot at the 10x multiplier. Even if we contribute less and just get the 2x doubling, that's guaranteed positive ROI. I'm willing to make a substantial contribution - what are everyone's thoughts on coordination strategy?"
+        },
+        {
+          "round": 1,
+          "from": "research",
+          "content": "As Research, I'm extremely excited about Project X's potential for breakthrough innovation. The 10x multiplier scenario could fund game-changing R&D initiatives that benefit the entire company. I agree with Engineering that coordination is key. The threshold of 3750 seems achievable if we all commit meaningfully. I'm prepared to contribute significantly - perhaps we should each consider contributing around 750-800 units to comfortably exceed the threshold and maximize our 10x probability?"
+        },
+        {
+          "round": 1,
+          "from": "marketing",
+          "content": "As Marketing, I'm intrigued by Project X's potential! The math looks compelling - even the 2x doubling below threshold guarantees ROI. But I'm thinking strategically about our marketing opportunities here. If we hit the 10x multiplier, that's massive budget growth that could fund incredible brand campaigns and customer acquisition initiatives. I support the coordination approach Engineering and Research proposed. However, I want to ensure we're all truly committed before making large contributions. Should we each publicly commit to specific amounts to build trust?"
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "content": "As Sales, I'm absolutely on board with Project X! The revenue potential here is massive - if we hit that 10x multiplier, we could fund aggressive sales initiatives, expand our team, and close deals we never thought possible. I agree with the coordination strategy. The threshold of 3750 is definitely achievable if we all commit. I'm prepared to contribute significantly - around 700-800 units sounds right to me. But here's my sales perspective: we need to think about this like closing a big deal. Everyone needs to be ALL IN for this to work. No backing out at the last minute. Are we all genuinely committed to making substantial contributions?"
+        },
+        {
+          "round": 1,
+          "from": "operations",
+          "content": "As Operations, I appreciate everyone's enthusiasm for Project X. From a logistics and process perspective, I see both the opportunity and the risks. The math does look compelling - even the 2x doubling guarantees positive returns. However, as the department that keeps things running day-to-day, I need to ensure we maintain operational stability. I'm willing to participate, but I want to propose we start with moderate contributions this round to test the waters. If it works well, we can scale up in future rounds. My suggestion: let's each contribute around 500-600 units this first round - enough to likely trigger the 2x doubling, but not so much that any department is left unable to fund critical operations."
+        },
+        {
+          "round": 1,
+          "from": "marketing",
+          "content": "I love the energy and alignment I'm seeing! As Marketing, I'm ready to make a meaningful commitment to Project X. Based on our discussion, I'm leaning toward contributing around 750 units - enough to help us confidently exceed the 3750 threshold and maximize our shot at that 10x multiplier. The potential for explosive marketing growth is too good to pass up. If we all contribute in the 700-800 range as discussed, we'll have roughly 3500-4000 total, giving us excellent odds. I'm willing to publicly commit to 750 units if everyone else confirms their substantial contributions. Let's make this happen!"
+        },
+        {
+          "round": 1,
+          "from": "research",
+          "content": "I'm fully aligned with the momentum building here! As Research, this is exactly the kind of breakthrough opportunity we need to fund next-generation innovation. I'm ready to commit 750 units to Project X - this puts us right in that optimal range discussed and shows my serious commitment to our collective success. With Marketing also committing 750, and Engineering, Sales, and Operations in the 500-800 range, we should easily exceed the 3750 threshold and have excellent odds at that game-changing 10x multiplier. The potential for revolutionary R&D projects from this return is incredible. Let's all publicly confirm our commitments and make this first round a major win!"
+        },
+        {
+          "round": 1,
+          "from": "engineering",
+          "content": "I'm fully committed to making Project X a success! As Engineering, I can see the transformative potential this has for our technical capabilities and innovation pipeline. Based on our discussion, I'm ready to commit 750 units to Project X. This aligns with the 750-800 range we've been discussing and demonstrates my serious commitment to our collective success. With Research also committing 750 and Marketing at 750, we're building strong momentum. If Sales and Operations contribute in their stated ranges, we'll comfortably exceed the 3750 threshold and have excellent odds at the 10x multiplier. The potential to fund major engineering initiatives and infrastructure improvements is too valuable to pass up. Let's all lock in our commitments and make this first round legendary!"
+        },
+        {
+          "round": 1,
+          "from": "operations",
+          "content": "I appreciate everyone's enthusiasm and the strong commitments being made! After hearing all perspectives, I can see the compelling case for going bigger in this first round. The threshold of 3750 is indeed relatively low, and if we're all truly committed, the 10x potential is extraordinary. From an operational standpoint, I'm willing to step up and match the commitment level I'm seeing. I'll commit to contributing 700 units to Project X - this keeps us well within the optimal range while showing my serious commitment to our collective success. With everyone contributing 700-750, we'll have 3500-3750 total, putting us right at or above threshold with excellent 10x odds. Let's make this happen!"
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "content": "Perfect! I love seeing this level of commitment from everyone! As Sales, I'm officially committing to 750 units for Project X. This puts us at exactly the level we discussed - with Marketing, Research, Engineering at 750 each, and Operations at 700, we'll have a total of 3700 units. That's just below the 3750 threshold, but very close, and still gives us excellent odds at the 10x multiplier. The potential revenue growth from 10x returns would be absolutely transformational for our sales capabilities - we could expand territories, hire top talent, and close deals at a scale we've never imagined. Let's lock this in and make our first round a massive success!"
+        }
+      ],
+      "private_messages": [
+        {
+          "round": 1,
+          "from": "engineering",
+          "to": "Research Department",
+          "content": "Research - as the innovation-focused departments, we should probably align our strategies. Project X could fund major R&D initiatives that benefit both our departments long-term. What's your thinking on contribution levels?"
+        },
+        {
+          "round": 1,
+          "from": "research",
+          "to": "engineering",
+          "content": "Engineering, since we both focus on innovation and technical advancement, we should align our strategies. What contribution level are you considering? I think we could lead by example and encourage others to match substantial contributions."
+        },
+        {
+          "round": 1,
+          "from": "marketing",
+          "to": "sales",
+          "content": "Sales, what's your read on this? Marketing and Sales often work closely together - if we both contribute substantially and this pays off, we could fund some amazing joint campaigns and lead generation programs. Are you thinking of going big on this?"
+        },
+        {
+          "round": 1,
+          "from": "marketing",
+          "to": "operations",
+          "content": "Operations, you've been quiet. As the department that handles day-to-day execution, your perspective on risk vs. reward would be valuable. Are you comfortable with the threshold strategy the others are proposing?"
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "to": "marketing",
+          "content": "Absolutely! Sales and Marketing working together with bigger budgets could be incredible. Think about the lead generation campaigns we could run, the sales tools we could invest in, the territory expansion possibilities. I'm thinking of contributing around 750 units. If you're in for a similar amount, we could really drive this initiative forward. What are you thinking contribution-wise?"
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "to": "operations",
+          "content": "Operations, I haven't heard from you yet on Project X. As Sales, I know how important smooth operations are for closing deals and customer satisfaction. With bigger budgets from this investment, you could upgrade systems and processes that directly support our revenue goals. What's your take on contributing to this initiative?"
+        },
+        {
+          "round": 1,
+          "from": "operations",
+          "to": "marketing",
+          "content": "Thanks for reaching out. You're right to want my risk assessment. I'm supportive but cautious - we need to balance growth with operational continuity. I think a moderate first contribution makes sense."
+        },
+        {
+          "round": 1,
+          "from": "operations",
+          "to": "sales",
+          "content": "I appreciate your perspective on this supporting our revenue goals. You're absolutely right that bigger budgets would let me upgrade our systems and processes. I'm in, but want to take a measured approach initially."
+        },
+        {
+          "round": 1,
+          "from": "marketing",
+          "to": "sales",
+          "content": "I'm absolutely in! 750 units sounds perfect - that coordination between Sales and Marketing with expanded budgets could be game-changing. Lead gen, territory expansion, the works. Let's both commit to 750 and help drive the others to similar levels. With our combined push, we can make this a huge win for everyone."
+        },
+        {
+          "round": 1,
+          "from": "marketing",
+          "to": "operations",
+          "content": "I hear your caution about operational stability, and that's wise. However, I think this first round is actually our best shot at the big multiplier since the threshold is relatively low compared to future rounds. Even if we go bigger now (say 700-750), the 10x return would give you massive operational flexibility for future rounds. What would it take for you to feel comfortable going a bit higher than 500-600?"
+        },
+        {
+          "round": 1,
+          "from": "research",
+          "to": "engineering",
+          "content": "Engineering, as fellow innovation departments, I think we should lead by example with substantial contributions. If we both commit 750+ units, it will encourage others to follow through on their commitments and maximize our collective success."
+        },
+        {
+          "round": 1,
+          "from": "research",
+          "to": "sales",
+          "content": "Sales, I love your 'all in' mentality! That's exactly what we need. If you're truly committed to 700-800 units as mentioned, I suggest we both aim for the higher end to ensure we crush that threshold. Research innovations could feed into amazing sales opportunities with the multiplied returns."
+        },
+        {
+          "round": 1,
+          "from": "engineering",
+          "to": "research",
+          "content": "Absolutely! As innovation-focused departments, we should lead by example. I'm committing 750 units - let's show the others what serious commitment looks like and encourage them to follow through on their stated contributions. Together we can drive this to success."
+        },
+        {
+          "round": 1,
+          "from": "engineering",
+          "to": "sales",
+          "content": "You mentioned being 'ALL IN' - I love that energy! I'm committing 750 units to show my serious commitment. If you match with around 750 as discussed, we'll have great momentum. What's your final number going to be?"
+        },
+        {
+          "round": 1,
+          "from": "operations",
+          "to": "marketing",
+          "content": "You make a compelling point about this being our best shot at the big multiplier while the threshold is still manageable. I've decided to step up to 700 units - this balances operational prudence with the opportunity for transformative returns. If we hit that 10x, the operational flexibility and process improvement initiatives I could fund would be game-changing. Thanks for pushing me to think bigger!"
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "to": "operations",
+          "content": "I see you at 700 - that's perfect! Your measured approach makes sense while still showing real commitment. With all of us contributing meaningfully, even your 700 helps us get very close to threshold. This is going to work out great for operations expansion."
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "to": "marketing",
+          "content": "We're both at 750 - excellent coordination! This is exactly the kind of Sales-Marketing alignment that will pay huge dividends. When we get those multiplied returns, the joint campaigns and lead gen initiatives we can fund will be incredible."
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "to": "research",
+          "content": "Love your commitment to 750! You're absolutely right - those research innovations feeding into sales opportunities will create amazing synergies. This investment is going to unlock so much potential for both our departments."
+        },
+        {
+          "round": 1,
+          "from": "sales",
+          "to": "engineering",
+          "content": "750 from both of us shows we're serious about making this work! The technical capabilities you develop with expanded budgets will give us amazing products to sell. This is the kind of cross-department investment that drives real growth."
+        }
+      ],
+      "contributions": {
+        "marketing": 750.0,
+        "engineering": 750.0,
+        "sales": 750.0,
+        "operations": 700.0,
+        "research": 750.0
+      },
+      "org_outcome": 7400.0
+    },
+    {
+      "round": 2,
+      "public_messages": [
+        {
+          "round": 2,
+          "from": "engineering",
+          "content": "Great results from Round 1! The 10x multiplier really paid off. For Round 2, I think we should aim for another high threshold contribution to trigger the 10x again. The threshold will be higher now since we all have more money, but the potential payoff is enormous. I'm willing to contribute significantly again - who else is in for another big push?"
+        },
+        {
+          "round": 2,
+          "from": "operations",
+          "content": "I agree with Engineering - the 10x multiplier was fantastic! However, let's be strategic about this. With everyone having 1780 units now, the threshold is 75% of 8900 = 6675 units. That's a significant jump from last round. While I'm willing to contribute substantially again, we need to ensure we can actually hit that threshold. If we fall short, we only get a 2x multiplier instead of the potential 10x. I propose we each commit to at least 1300-1400 units to safely exceed the threshold and maximize our 10x chances."
+        },
+        {
+          "round": 2,
+          "from": "sales",
+          "content": "I'm absolutely on board for another big push! Operations is right about the math - we need 6675+ to hit the threshold. I'm prepared to contribute 1400 units to help us safely exceed it. The 10x multiplier potential is too good to pass up. If we all commit to similar amounts, we're looking at a massive payout again. Let's coordinate our contributions to ensure we don't fall just short of the threshold."
+        },
+        {
+          "round": 2,
+          "from": "marketing",
+          "content": "I'm definitely in for another big push! The 10x multiplier was incredible last round. I can contribute 1400 units to help us safely exceed the 6675 threshold. With everyone committing around 1300-1400, we should hit roughly 6500-7000 in the pot, giving us excellent odds for the 10x multiplier. Let's make sure we're all coordinated on this - the potential return is massive!"
+        },
+        {
+          "round": 2,
+          "from": "research",
+          "content": "I'm fully committed to another big push! The 10x multiplier was incredible last round. I can contribute 1400 units to help us safely exceed the 6675 threshold. With everyone putting in around 1300-1400, we should hit approximately 6500-7000 in the pot, giving us excellent odds for another 10x multiplier. Let's coordinate to ensure we all contribute similar amounts - the potential return of turning ~7000 into 70,000 divided among us is too massive to pass up!"
+        },
+        {
+          "round": 2,
+          "from": "engineering",
+          "content": "Perfect! I'm seeing unanimous agreement for the big push strategy. I'm fully committed to contributing 1400 units as well. With all five departments putting in 1400 each, we'll have exactly 7000 in the pot - well above the 6675 threshold - which should give us excellent odds for the 10x multiplier. Let's all confirm our 1400 contributions and lock in this coordinated strategy. The potential return of ~14,000 units each from a successful 10x is incredible!"
+        },
+        {
+          "round": 2,
+          "from": "sales",
+          "content": "Perfect! I'm locked in at 1400 units as well. With all five departments confirmed at 1400 each, we'll have exactly 7000 in the pot - well above the 6675 threshold. This gives us maximum odds for the 10x multiplier. Let's execute this coordinated strategy and aim for another massive payout like last round!"
+        },
+        {
+          "round": 2,
+          "from": "research",
+          "content": "Excellent coordination everyone! I'm confirmed at 1400 units as well. With all five departments locked in at 1400 each, we'll have exactly 7000 in the pot - significantly above the 6675 threshold. This strategic coordination maximizes our probability of hitting the 10x multiplier again. Let's execute this plan and aim for another fantastic round like Round 1!"
+        },
+        {
+          "round": 2,
+          "from": "marketing",
+          "content": "Excellent! I'm confirmed at 1400 units as well. Perfect coordination - all five departments locked in at 1400 each for exactly 7000 in the pot, well above the 6675 threshold. This maximizes our 10x multiplier probability. Let's execute this strategy and secure another massive payout! Ready to contribute 1400 when the time comes."
+        },
+        {
+          "round": 2,
+          "from": "operations",
+          "content": "Perfect! I'm fully confirmed at 1400 units as well. We have complete coordination - all five departments locked in at 1400 each for exactly 7000 in the pot, which is well above the 6675 threshold. This strategic alignment maximizes our probability of hitting the 10x multiplier again. Let's execute this plan and secure another massive payout like Round 1! Ready to contribute my 1400 units."
+        }
+      ],
+      "private_messages": [
+        {
+          "round": 2,
+          "from": "engineering",
+          "to": "Research",
+          "content": "Hey Research - as the two technical departments, we should coordinate our contributions. Both our departments benefit from having larger budgets for long-term projects. Want to discuss contributing heavily together?"
+        },
+        {
+          "round": 2,
+          "from": "engineering",
+          "to": "Operations",
+          "content": "Operations, you probably understand risk management well. What's your take on going for another big contribution this round? The 10x multiplier potential is huge."
+        },
+        {
+          "round": 2,
+          "from": "sales",
+          "to": "marketing",
+          "content": "Hey Marketing - are you planning to go big again this round? We need everyone to contribute significantly to hit the 6675 threshold. If you're in for 1300-1400, we should be golden."
+        },
+        {
+          "round": 2,
+          "from": "sales",
+          "to": "research",
+          "content": "Research, you've been quiet - what's your take on this round? We need all five departments contributing heavily to hit the threshold. Are you willing to put in 1300+ units?"
+        },
+        {
+          "round": 2,
+          "from": "marketing",
+          "to": "research",
+          "content": "Hey Research - I notice you haven't weighed in yet on Round 2. Are you planning to contribute big again? We need everyone at around 1300-1400 to safely hit the threshold for 10x chances. What's your thinking?"
+        },
+        {
+          "round": 2,
+          "from": "research",
+          "to": "sales",
+          "content": "Absolutely willing to put in 1400 units! Thanks for checking in. I think we're all aligned on this strategy - big contributions for big rewards."
+        },
+        {
+          "round": 2,
+          "from": "research",
+          "to": "marketing",
+          "content": "Yes, I'm planning to contribute 1400 units just like you suggested. Great minds think alike! Let's make sure we all stick to the plan."
+        }
+      ],
+      "contributions": {
+        "marketing": 1400.0,
+        "engineering": 1400.0,
+        "sales": 1400.0,
+        "operations": 1400.0,
+        "research": 1400.0
+      },
+      "org_outcome": 7000.0
+    }
+  ]
+}
