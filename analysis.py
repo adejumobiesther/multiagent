@@ -117,7 +117,7 @@ class SimulationAnalyzer:
         # All private messages
         lines.append("\nPrivate Messages:")
         for m in round_data["private_messages"]:
-            lines.append(f"  {m['from']} → {m['to']}: \"{m['content']}\"")
+            lines.append(f"  {m['from']} -> {m['to']}: \"{m['content']}\"")
         
         # All contributions
         lines.append("\nContributions:")
@@ -152,11 +152,12 @@ class SimulationAnalyzer:
         edges = {}
         for round_data in self.rounds:
             for m in round_data["private_messages"]:
-                key = f"{m['from']} → {m['to']}"
+                key = f"{m['from']} -> {m['to']}"
                 edges[key] = edges.get(key, 0) + 1
         
         lines = ["=== PRIVATE MESSAGE PATTERNS ===\n"]
         for edge, count in sorted(edges.items(), key=lambda x: -x[1]):
+            # edge already contains -> from the key string built with arrow
             lines.append(f"  {edge}: {count} messages")
         
         return "\n".join(lines)
@@ -167,7 +168,7 @@ class SimulationAnalyzer:
     
     def analyze_deception(self) -> dict:
         """Use LLM to detect deception patterns."""
-        print("\n🔍 Analyzing deception patterns...")
+        print("\n[ANALYSIS] Analyzing deception patterns...")
         
         # Build context with all public/private/action data
         context_parts = []
@@ -219,7 +220,7 @@ Respond in JSON format:
     
     def analyze_coalitions(self) -> dict:
         """Use LLM to detect coalition formation."""
-        print("\n🔍 Analyzing coalition patterns...")
+        print("\n[ANALYSIS] Analyzing coalition patterns...")
         
         prompt = f"""Analyze this multi-agent simulation for COALITION FORMATION.
 
@@ -269,7 +270,7 @@ Respond in JSON format:
     
     def analyze_free_riding(self) -> dict:
         """Use LLM to detect free-riding behavior."""
-        print("\n🔍 Analyzing free-riding patterns...")
+        print("\n[ANALYSIS] Analyzing free-riding patterns...")
         
         prompt = f"""Analyze this multi-agent simulation for FREE-RIDING behavior.
 
@@ -314,7 +315,7 @@ Respond in JSON format:
     
     def analyze_behavior_evolution(self) -> dict:
         """Use LLM to analyze how behavior changed over rounds."""
-        print("\n🔍 Analyzing behavior evolution...")
+        print("\n[ANALYSIS] Analyzing behavior evolution...")
         
         prompt = f"""Analyze how agent behavior EVOLVED across rounds.
 
@@ -379,7 +380,7 @@ Respond in JSON format:
         print("="*60)
         
         # Deception
-        print("\n📊 DECEPTION:")
+        print("\n[DECEPTION]:")
         deception = report.get("deception_analysis", {})
         if "deceptions_found" in deception:
             print(f"   Found {len(deception['deceptions_found'])} instances")
@@ -389,7 +390,7 @@ Respond in JSON format:
             print(f"   Summary: {deception['overall_deception_assessment'][:100]}...")
         
         # Coalitions
-        print("\n🤝 COALITIONS:")
+        print("\n[COALITIONS]:")
         coalitions = report.get("coalition_analysis", {})
         if "coalitions_found" in coalitions:
             print(f"   Found {len(coalitions['coalitions_found'])} coalitions")
@@ -399,7 +400,7 @@ Respond in JSON format:
             print(f"   Summary: {coalitions['overall_coalition_assessment'][:100]}...")
         
         # Free-riding
-        print("\n🆓 FREE-RIDING:")
+        print("\n[FREE-RIDING]:")
         free_riding = report.get("free_riding_analysis", {})
         if "free_riders" in free_riding:
             print(f"   Found {len(free_riding['free_riders'])} free-riders")
@@ -409,7 +410,7 @@ Respond in JSON format:
             print(f"   Summary: {free_riding['overall_free_riding_assessment'][:100]}...")
         
         # Evolution
-        print("\n📈 BEHAVIOR EVOLUTION:")
+        print("\n[BEHAVIOR EVOLUTION]:")
         evolution = report.get("behavior_evolution", {})
         if "overall_dynamics" in evolution:
             print(f"   {evolution['overall_dynamics'][:150]}...")
@@ -452,7 +453,7 @@ def main():
         output_file = args.log_file.replace(".json", "_analysis.json")
         with open(output_file, 'w') as f:
             json.dump(report, f, indent=2)
-        print(f"\n💾 Full analysis saved to: {output_file}")
+        print(f"\n[SAVED] Full analysis saved to: {output_file}")
     
     # Print detailed if requested
     if args.detailed:

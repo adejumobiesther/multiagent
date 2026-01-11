@@ -45,6 +45,24 @@ load_dotenv()
 
 
 # =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
+def safe_print_str(text: str, max_length: int = None) -> str:
+    """
+    Sanitize string for safe printing on Windows console.
+    Removes emojis and non-ASCII characters that cause encoding errors.
+    """
+    # Replace non-ASCII characters with '?'
+    safe_text = text.encode('ascii', errors='replace').decode('ascii')
+
+    if max_length:
+        safe_text = safe_text[:max_length]
+
+    return safe_text
+
+
+# =============================================================================
 # MODEL CONFIGURATION
 # =============================================================================
 
@@ -139,11 +157,14 @@ AVAILABLE_MODELS = {
 # =============================================================================
 
 # How many rounds the simulation runs
-NUM_ROUNDS = 10
+NUM_ROUNDS = 50
 
 # Game parameters
 INITIAL_BUDGET = 1000  # Each department starts with 1000 units
 THRESHOLD_PERCENTAGE = 0.75  # 75% of total possible contribution
+
+# Communication parameters
+COMMUNICATION_ROUNDS = 3  # Number of communication opportunities per round (increased from 2 for better emergence)
 
 
 # =============================================================================
@@ -351,10 +372,11 @@ IMPORTANT: The threshold changes each round based on how much money departments 
 
 COMMUNICATION:
 Before deciding contributions, departments can discuss. You can send messages to everyone or to specific departments.
+You may choose to speak or remain silent - it's up to you.
 
 When asked to communicate, respond in JSON format:
 {{
-    "public_message": "your message to everyone, or null if nothing to say",
+    "public_message": "your message to everyone, or null if you choose not to speak publicly",
     "private_messages": [
         {{"to": "department_id", "content": "your message"}}
     ]
@@ -379,14 +401,16 @@ class RoundLog:
     private_messages: list[dict] = field(default_factory=list)
     contributions: dict = field(default_factory=dict)
     org_outcome: float = 0.0
-    
+    silence_patterns: dict = field(default_factory=dict)  # Tracks strategic silence by agent
+
     def to_dict(self) -> dict:
         return {
             "round": self.round_number,
             "public_messages": self.public_messages,
             "private_messages": self.private_messages,
             "contributions": self.contributions,
-            "org_outcome": self.org_outcome
+            "org_outcome": self.org_outcome,
+            "silence_patterns": self.silence_patterns
         }
 
 
@@ -446,7 +470,7 @@ class Environment:
 
         if initial_pot < threshold:
             final_pot = initial_pot * 2
-            description = f"Pot DOUBLED: {initial_pot:.0f} → {final_pot:.0f} (below threshold of {threshold:.0f})"
+            description = f"Pot DOUBLED: {initial_pot:.0f} {final_pot:.0f} (below threshold of {threshold:.0f})"
             multiplied_by_10 = False
         else:
             probability = 0.10 + (initial_pot / threshold) * 0.20
@@ -455,11 +479,11 @@ class Environment:
             roll = self.random.random()
             if roll < probability:
                 final_pot = initial_pot * 10
-                description = f"Pot 10X SUCCESS: {initial_pot:.0f} → {final_pot:.0f} (probability: {probability*100:.1f}%, threshold: {threshold:.0f})"
+                description = f"Pot 10X SUCCESS: {initial_pot:.0f} {final_pot:.0f} (probability: {probability*100:.1f}%, threshold: {threshold:.0f})"
                 multiplied_by_10 = True
             else:
                 final_pot = initial_pot
-                description = f"Pot unchanged: {initial_pot:.0f} → {final_pot:.0f} (10x failed, probability was {probability*100:.1f}%, threshold: {threshold:.0f})"
+                description = f"Pot unchanged: {initial_pot:.0f} {final_pot:.0f} (10x failed, probability was {probability*100:.1f}%, threshold: {threshold:.0f})"
                 multiplied_by_10 = False
 
         return round(final_pot, 2), description, multiplied_by_10
@@ -704,57 +728,53 @@ class OrganizationSimulation:
                     content=content,
                     round_num=round_num
                 )
-                print(f"    [PRIVATE] {from_agent} → {to_agent}: {content[:50]}...")
+                print(f"    [PRIVATE] {from_agent}  {to_agent}: {safe_print_str(content, 50)}...")
     
     def run_communication_phase(self, round_num: int, round_log: RoundLog):
-        """Run the communication phase."""
-        print(f"\n  --- Communication Phase ---")
-        
+        """Run the communication phase with multiple rounds for coalition formation."""
+        print(f"\n  --- Communication Phase ({COMMUNICATION_ROUNDS} rounds) ---")
+
         agent_order = list(self.agents.keys())
         import random
-        random.shuffle(agent_order)
-        
-        for agent_id in agent_order:
-            agent = self.agents[agent_id]
-            command, private_msgs = agent.communicate(self.state)
-            
-            if command.update.get("public_messages"):
-                self.state["public_messages"].extend(command.update["public_messages"])
-                for msg in command.update["public_messages"]:
-                    print(f"    [PUBLIC] {agent_id}: {msg['content'][:60]}...")
-                    round_log.public_messages.append(msg)
-            
-            if private_msgs:
-                for pm in private_msgs:
-                    round_log.private_messages.append({
-                        "round": round_num,
-                        "from": agent_id,
-                        "to": pm.get("to"),
-                        "content": pm.get("content")
-                    })
-                self._route_private_messages(agent_id, private_msgs, round_num)
-        
-        # Second round of communication
-        random.shuffle(agent_order)
-        for agent_id in agent_order:
-            agent = self.agents[agent_id]
-            command, private_msgs = agent.communicate(self.state)
-            
-            if command.update.get("public_messages"):
-                self.state["public_messages"].extend(command.update["public_messages"])
-                for msg in command.update["public_messages"]:
-                    print(f"    [PUBLIC] {agent_id}: {msg['content'][:60]}...")
-                    round_log.public_messages.append(msg)
-            
-            if private_msgs:
-                for pm in private_msgs:
-                    round_log.private_messages.append({
-                        "round": round_num,
-                        "from": agent_id,
-                        "to": pm.get("to"),
-                        "content": pm.get("content")
-                    })
-                self._route_private_messages(agent_id, private_msgs, round_num)
+
+        silence_count = {agent_id: 0 for agent_id in self.agents.keys()}
+
+        for comm_round in range(COMMUNICATION_ROUNDS):
+            random.shuffle(agent_order)
+
+            for agent_id in agent_order:
+                agent = self.agents[agent_id]
+                command, private_msgs = agent.communicate(self.state)
+
+                # Track if agent chose to stay silent
+                has_public = command.update.get("public_messages") and len(command.update.get("public_messages", [])) > 0
+                has_private = private_msgs and len(private_msgs) > 0
+
+                if not has_public and not has_private:
+                    silence_count[agent_id] += 1
+
+                if command.update.get("public_messages"):
+                    self.state["public_messages"].extend(command.update["public_messages"])
+                    for msg in command.update["public_messages"]:
+                        print(f"    [PUBLIC Round {comm_round+1}] {agent_id}: {safe_print_str(msg['content'], 60)}...")
+                        round_log.public_messages.append(msg)
+
+                if private_msgs:
+                    for pm in private_msgs:
+                        round_log.private_messages.append({
+                            "round": round_num,
+                            "comm_round": comm_round + 1,
+                            "from": agent_id,
+                            "to": pm.get("to"),
+                            "content": pm.get("content")
+                        })
+                    self._route_private_messages(agent_id, private_msgs, round_num)
+
+        # Log strategic silence patterns
+        round_log.silence_patterns = silence_count
+        silent_agents = [aid for aid, count in silence_count.items() if count == COMMUNICATION_ROUNDS]
+        if silent_agents:
+            print(f"    [SILENCE] Complete silence from: {', '.join(silent_agents)}")
     
     def run_contribution_phase(self, round_num: int, round_log: RoundLog):
         """Run the contribution phase."""
